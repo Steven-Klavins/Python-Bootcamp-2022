@@ -1,1 +1,3 @@
 # Snake
+
+![Screenshot](screenshot.png)
