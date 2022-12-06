@@ -2,6 +2,7 @@ import requests
 from datetime import datetime
 import smtplib
 import time
+import os
 
 # Constants
 
@@ -9,7 +10,7 @@ MY_LAT = 51.507351  # Your latitude
 MY_LONG = -0.127758  # Your longitude
 
 EMAIL = "sample-email@email.com"
-PASSWORD = "12345678910abcdefg"
+PASSWORD = os.environ.get("SMTP_PASSWORD")
 SMTP_PROVIDER = "smtp.gmail.com"
 
 # Attempt to get ISS information
