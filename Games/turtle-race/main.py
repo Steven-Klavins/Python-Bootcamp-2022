@@ -5,6 +5,7 @@ colours = ["red", "orange", "yellow", "green", "blue", "purple"]
 turtle_dictonary = {}
 screen = Screen()
 screen.setup(width=500, height=400)
+screen.title("Turtle Race")
 MAX_SPEED = 15
 
 
