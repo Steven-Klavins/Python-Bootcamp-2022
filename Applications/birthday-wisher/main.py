@@ -2,11 +2,12 @@ import pandas
 import random
 import smtplib
 import datetime as dt
+import os
 
 # SMPT constants
 
 EMAIL = "youremail@smtpprovider.com"
-PASSWORD = "apppasswordfromsmtpprovider"
+PASSWORD = os.environ.get("SMTP_PASSWORD")
 SMTP_PROVIDER = "smtp.gmail.com"
 
 
