@@ -1,1 +1,3 @@
 # Quizzler
+
+![Screenshot](screenshot.png)
