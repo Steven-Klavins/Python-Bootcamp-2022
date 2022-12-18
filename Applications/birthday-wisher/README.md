@@ -40,7 +40,7 @@ Additionally, update line 27 of main.py to select a random int in a range that c
 ```
 27 | template_path = f"letter_templates/letter_{random.randint(1, 4)}.txt"
 ```
-####Install the packages
+#### Install the packages
 This script only requires 5 packages. You can install them either directly through a package manager such as [pip](https://pypi.org/project/pip/) or via your IDE if choice. This project was created in [Python 3.9.1](https://www.python.org/downloads/release/python-391/), however, it should run in the most recent releases.
 
 ### Running The Script
