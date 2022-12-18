@@ -21,7 +21,7 @@ SMTP_PROVIDER = "smtp.gmail.com"
 ```
 
 #### Install the packages
-This script only requires 5 packages. You can install them either directly through a package manager such as [pip](https://pypi.org/project/pip/) or via your IDE if choice. This project was created in [Python 3.9.1](https://www.python.org/downloads/release/python-391/), however, it should run in the most recent releases.
+This script only requires 5 packages. You can install them either directly through a package manager such as [pip](https://pypi.org/project/pip/) or via your IDE of choice. This project was created in [Python 3.9.1](https://www.python.org/downloads/release/python-391/), however, it should run in the most recent releases.
 
 ### Running The Script
 This script of course can be run locally, however, for a quick and easy way of deploying it you can use [PythonAnywhere](https://www.pythonanywhere.com/).
