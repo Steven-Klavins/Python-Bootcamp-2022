@@ -7,7 +7,7 @@ class FlightSearch:
         pass
 
     # Return a city's code
-    def find_city_code(self, city_name):
+    def find_city_iata_code(self, city_name):
         params = {
             "term": city_name,
             "location_types": "city",
@@ -20,4 +20,4 @@ class FlightSearch:
         response = requests.get(url="https://api.tequila.kiwi.com/locations/query", params=params, headers=headers)
         response.raise_for_status()
         data = response.json()
-        print(data['locations'][0]["code"])
+        return data['locations'][0]["code"]
