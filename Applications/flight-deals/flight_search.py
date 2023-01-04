@@ -30,6 +30,7 @@ class FlightSearch:
             'adults': '1',
             "date_from": str(datetime.date.today().strftime('%d/%m/%Y')),
             "date_to": str((datetime.date.today() + relativedelta(months=+6)).strftime('%d/%m/%Y')),
+            "curr": "GBP",
             "sort": "price"
         }
 
