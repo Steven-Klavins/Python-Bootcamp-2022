@@ -1,5 +1,6 @@
 from flight_search import FlightSearch
 from data_manager import DataManager
+from notification_manager import NotificationManager
 from datetime import datetime
 
 
@@ -11,6 +12,7 @@ class FlightData:
         data_manager = DataManager()
         table_data = data_manager.get_sheet_data()
         flight_search = FlightSearch()
+        notification_manager = NotificationManager()
 
         # Iterate over the Google sheet data and gather the cheapest in date flights.
 
@@ -26,6 +28,7 @@ class FlightData:
             flight_has_departed = datetime.strptime(row['date'], "%d/%m/%Y").date() < datetime.now().date()
 
             if int(row['lowestPrice']) > lowest_current_price or flight_has_departed:
+                notification_manager.send_text_alert(best_value_flight)
                 data_manager.update_cell_data(column_name="lowestPrice", row_id=row['id'],
                                               new_value=lowest_current_price)
                 data_manager.update_cell_data(column_name="date", row_id=row['id'],
