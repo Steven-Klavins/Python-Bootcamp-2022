@@ -1,9 +1,6 @@
-import os
-import requests
-from data_manager import DataManager
-from flight_search import FlightSearch
 from flight_data import FlightData
-from notification_manager import NotificationManager
 
-flight_search = FlightSearch()
-flight_search.find_city_code(city_name="London")
+# Declare your city code here
+# This file can be run daily/weekly depending on how frequently you'd like to check flights
+fd = FlightData(city_from_iata_code="LON")
+fd.compare_flights_and_update()
