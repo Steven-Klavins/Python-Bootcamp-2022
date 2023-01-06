@@ -10,10 +10,14 @@ SHEETY_HEADERS = {
 class DataManager:
     # Collect all the Google sheet data
     def get_sheet_data(self):
-        response = requests.get(os.getenv("SHEETY_ENDPOINT"), headers=SHEETY_HEADERS)
-        response.raise_for_status()
-        data = response.json()
-        return data['prices']
+        try:
+            response = requests.get(os.getenv("SHEETY_ENDPOINT"), headers=SHEETY_HEADERS)
+            response.raise_for_status()
+            data = response.json()
+            return data['prices']
+        except requests.exceptions.RequestException as e:
+            print(e)
+            return False
 
     # Update a single table cell with a new value
     def update_cell_data(self, column_name, row_id, new_value):
@@ -22,8 +26,10 @@ class DataManager:
                 column_name: new_value
             }
         }
-
-        response = requests.put(f"{os.getenv('SHEETY_ENDPOINT')}/{row_id}", headers=SHEETY_HEADERS, json=params)
-        response.raise_for_status()
+        try:
+            response = requests.put(f"{os.getenv('SHEETY_ENDPOINT')}/{row_id}", headers=SHEETY_HEADERS, json=params)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            print(e)
 
 
