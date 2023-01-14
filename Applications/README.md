@@ -9,3 +9,4 @@
 - [Rain Alert](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Applications/rain-alert) - A desktop Pomodoro clock to help you better manage time and increase productivity.
 - [Stock News](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Applications/stock-news) - Delivers SMS alerts for notable increases and decreases in company stock prices using the Twilio and Alphavantage API.
 - [Workout Tracker](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Applications/workout-tracker) - Utilizes the Nutritionix Natural Language API and a Google sheet to help you better track your workout routines. 
+- [YT News](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Applications/yc-news) - Retrieves the highest trending article from [ycombinator.com](https://news.ycombinator.com/) through the use of the Beautiful Soup web scraper library. 
