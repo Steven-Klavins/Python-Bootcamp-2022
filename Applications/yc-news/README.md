@@ -1,1 +1,1 @@
-# YT News
+# YC News
