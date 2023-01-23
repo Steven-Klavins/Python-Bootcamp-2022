@@ -1,0 +1,36 @@
+body {
+    padding: 60px
+}
+img {
+    max-width: 150px;
+}
+
+.header {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.header-section {
+    display: flex;
+    vertical-align: center;
+}
+
+hr {
+    color: black;
+    height: 1px;
+}
+
+td {
+    padding-right: 10px;
+    padding-bottom: 10px;
+}
+
+ul {
+    padding: 0px;
+}
+
+.web-link-list li {
+    list-style: none;
+    text-align: left;
+}
+
