@@ -22,10 +22,10 @@ def get_blog_data():
 
 # Send the contact form email.
 def send_contact_email(email_data):
-    message = f"From: {email_data['name']} \n\n " \
-              f"Email: {email_data['email']} \n\n " \
-              f"Tel: {email_data['phone']} \n\n " \
-              f"Message: \n\n {email_data['message']} \n\n"
+    message = f"From: {email_data['name']} \n " \
+              f"Email: {email_data['email']} \n " \
+              f"Tel: {email_data['phone']} \n " \
+              f"\n {email_data['message']}"
     email_body = f"Subject:Message from {email_data['name']} \n\n {message}"
     try:
         with smtplib.SMTP(SMTP_PROVIDER) as connection:
