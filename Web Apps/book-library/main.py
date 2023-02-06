@@ -53,6 +53,23 @@ def add():
 
     return render_template("add.html", form=form)
 
+@app.route("/edit/<int:book_id>", methods=['POST', 'GET'])
+def edit(book_id):
+    book = Books.query.get(book_id)
+    form = BookForm()
+
+    if form.validate_on_submit():
+        book.title = form.book_name.data
+        book.author = form.book_author.data
+        book.rating = form.rating.data
+        db.session.commit()
+        return redirect(url_for('home'))
+    else:
+        form.book_name.data = book.title
+        form.book_author.data = book.author
+        form.rating.data = book.rating
+        return render_template("edit.html", form=form)
+
 
 if __name__ == "__main__":
     app.run(debug=True)
