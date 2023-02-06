@@ -8,13 +8,15 @@ import os
 
 app = Flask(__name__)
 Bootstrap(app)
+
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///books-collection.db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 db = SQLAlchemy(app)
 
 
-class Books(db.Model):
+class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), unique=True, nullable=False)
     author = db.Column(db.String(250), unique=True, nullable=False)
@@ -25,10 +27,13 @@ class Books(db.Model):
 
 
 def add_new_book_entry(form_data):
-    db.session.commit(book_name=form_data.book_name.data,
-                      book_author=form_data.book_author.data,
-                      rating=form_data.rating.data
-                      )
+    book = Book(
+        title=form_data.book_name.data,
+        author=form_data.book_author.data,
+        rating=form_data.rating.data
+    )
+    db.session.add(book)
+    db.session.commit()
 
 
 class BookForm(FlaskForm):
@@ -40,8 +45,8 @@ class BookForm(FlaskForm):
 
 @app.route('/')
 def home():
-    print(Books.query.all())
-    return render_template("index.html", books=Books.query.all())
+    print(Book.query.all())
+    return render_template("index.html", books=Book.query.all(), title="My Books")
 
 
 @app.route("/add", methods=['POST', 'GET'])
@@ -51,11 +56,20 @@ def add():
         add_new_book_entry(form)
         return redirect(url_for('home'))
 
-    return render_template("add.html", form=form)
+    return render_template("add.html", form=form, title="Add")
+
+
+@app.route("/delete/<int:book_id>", methods=['POST', 'GET'])
+def delete(book_id):
+    book = Book.query.get(book_id)
+    db.session.delete(book)
+    db.session.commit()
+    return redirect(url_for('home'))
+
 
 @app.route("/edit/<int:book_id>", methods=['POST', 'GET'])
 def edit(book_id):
-    book = Books.query.get(book_id)
+    book = Book.query.get(book_id)
     form = BookForm()
 
     if form.validate_on_submit():
@@ -67,8 +81,8 @@ def edit(book_id):
     else:
         form.book_name.data = book.title
         form.book_author.data = book.author
-        form.rating.data = book.rating
-        return render_template("edit.html", form=form)
+        form.rating.data = int(book.rating)
+        return render_template("edit.html", form=form, title="Edit")
 
 
 if __name__ == "__main__":
