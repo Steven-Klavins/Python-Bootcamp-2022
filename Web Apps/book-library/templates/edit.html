@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Book</title>
+    {% import "bootstrap/wtf.html" as wtf %}
+</head>
+<body>
+    {{ wtf.quick_form(form, novalidate=True) }}
+</body>
+</html>
