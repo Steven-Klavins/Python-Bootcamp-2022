@@ -9,7 +9,7 @@
 {% if books|length > 0 %}
 {% for book in books %}
     <ul>
-        <li>{{ book.title }} {{ book.author }} {{ book.rating }}/10</li>
+        <li>{{ book.title }} {{ book.author }} {{ book.rating }}/10 <a href="{{ url_for('edit', book_id=book.id) }}">edit</a></li>
     </ul>
 {% endfor %}
 {% else %}
