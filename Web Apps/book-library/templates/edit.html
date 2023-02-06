@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Edit Book</title>
-    {% import "bootstrap/wtf.html" as wtf %}
-</head>
+{% import "bootstrap/wtf.html" as wtf %}
+{% include "head.html" %}
+{% include "header.html" %}
+{% block content %}
 <body>
+<div class="container">
+  <h1>Edit</h1>
+  <div class="form-group">
     {{ wtf.quick_form(form, novalidate=True) }}
+  </div>
+</div>
 </body>
+{% endblock %}
 </html>
