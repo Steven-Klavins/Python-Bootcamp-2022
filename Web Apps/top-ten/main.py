@@ -1,12 +1,11 @@
-from flask import Flask, render_template, redirect, url_for, request
+from flask import Flask, render_template, redirect, url_for
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, IntegerField, FloatField
+from wtforms import StringField, SubmitField, FloatField
 from wtforms.validators import DataRequired
 import requests
 import os
-import sqlite3
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -49,9 +48,35 @@ def add_new_movie(form_data):
     db.session.commit()
 
 
+def look_up_movie(title):
+
+    params = {
+        "api_key": os.getenv('TMDB_API_KEY'),
+        "query": title,
+        "include_adult": True
+    }
+
+    try:
+        response = requests.get(url="https://api.themoviedb.org/3/search/movie", params=params)
+        response.raise_for_status()
+        data = response.json()
+        hashed_data = [{"id": movie['id'], "title": movie['original_title'], "date": movie['release_date']} for movie in data['results']]
+        return hashed_data
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return False
+
+    pass
+
+
 class EditMovieForm(FlaskForm):
     rating = FloatField("Your Rating Out Of 10 e.g. 7.5", validators=[DataRequired()])
     review = StringField('Your Review', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class AddMovieForm(FlaskForm):
+    movie_title = StringField('Movie Title', validators=[DataRequired()])
     submit = SubmitField('Submit')
 
 
@@ -75,6 +100,31 @@ def edit(movie_id):
         form.rating.data = movie.rating
         form.review.data = movie.review
     return render_template("edit.html", movie=movie, form=form)
+
+
+@app.route("/delete<int:movie_id>", methods=['GET'])
+def delete(movie_id):
+    movie = Movie.query.get(movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
+@app.route("/add", methods=['POST', 'GET'])
+def add():
+    form = AddMovieForm()
+    if form.validate_on_submit():
+        movies = look_up_movie(form.movie_title.data)
+        return render_template("select.html", movies=movies)
+    else:
+        return render_template("add.html", form=form)
+
+
+@app.route("/select<int:movie_id>", methods=['POST', 'GET'])
+def select(movie_id):
+    print(movie_id)
+    return redirect(url_for('home'))
+    # Second API call for id will go here...
 
 
 if __name__ == '__main__':
