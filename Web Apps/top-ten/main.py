@@ -33,15 +33,16 @@ class Movie(db.Model):
 # PRIMARY KEY, title varchar(250) NOT NULL UNIQUE, year INTEGER NOT NULL, description varchar(250) NOT NULL,
 # rating FLOAT NOT NULL, ranking INTEGER NOT NULL, review varchar(500) NOT NULL, img_url varchar(250))")
 
-def add_new_movie(form_data):
+def add_new_movie(data):
+    print(data)
     new_movie = Movie(
-        title=form_data.title,
-        year=form_data.year,
-        description=form_data.description,
-        rating=form_data.rating,
-        ranking=form_data.ranking,
-        review=form_data.review,
-        img_url=form_data.img_url,
+        title=data['original_title'],
+        year=int(data['release_date'][:4]),
+        description=data["overview"],
+        rating=0.0,
+        ranking=0,
+        review="None",
+        img_url=f"https://image.tmdb.org/t/p/original{data['poster_path']}",
     )
 
     db.session.add(new_movie)
@@ -60,13 +61,27 @@ def look_up_movie(title):
         response = requests.get(url="https://api.themoviedb.org/3/search/movie", params=params)
         response.raise_for_status()
         data = response.json()
-        hashed_data = [{"id": movie['id'], "title": movie['original_title'], "date": movie['release_date']} for movie in data['results']]
+        hashed_data = [{"id": movie['id'], "title": movie['title'], "date": movie['release_date']} for movie in data['results']]
         return hashed_data
     except requests.exceptions.RequestException as e:
         print(e)
-        return False
+        return []
 
-    pass
+
+def look_up_id(movie_id):
+
+    params = {
+        "api_key": os.getenv('TMDB_API_KEY'),
+    }
+
+    try:
+        response = requests.get(url=f"https://api.themoviedb.org/3/movie/{movie_id}", params=params)
+        response.raise_for_status()
+        data = response.json()
+        return data
+    except requests.exceptions.RequestException as e:
+        print(e)
+        return False
 
 
 class EditMovieForm(FlaskForm):
@@ -122,9 +137,10 @@ def add():
 
 @app.route("/select<int:movie_id>", methods=['POST', 'GET'])
 def select(movie_id):
-    print(movie_id)
-    return redirect(url_for('home'))
-    # Second API call for id will go here...
+    movie = look_up_id(movie_id)
+    add_new_movie(movie)
+    movie_added = db.session.query(Movie).filter_by(title=movie['title']).first()
+    return redirect(url_for('edit', movie_id=movie_added.id))
 
 
 if __name__ == '__main__':
