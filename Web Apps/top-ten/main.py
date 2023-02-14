@@ -7,6 +7,8 @@ from wtforms.validators import DataRequired
 import requests
 import os
 
+# import sqlite3
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -15,33 +17,30 @@ Bootstrap(app)
 db = SQLAlchemy(app)
 
 
-class Movie(db.Model):
+# db = sqlite3.connect("movies-collection.db")
+# cursor = db.cursor()
+# cursor.execute("CREATE TABLE movies (id INTEGER PRIMARY KEY, title varchar(250) NOT NULL UNIQUE, year INTEGER NOT "
+#                "NULL, description varchar(250) NOT NULL, rating FLOAT, review varchar(500), "
+#                "img_url varchar(250))")
+
+class Movies(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), unique=True, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     description = db.Column(db.String(250), nullable=False)
-    rating = db.Column(db.Float, nullable=False)
-    ranking = db.Column(db.Integer, nullable=False)
-    review = db.Column(db.String(500), nullable=False)
+    rating = db.Column(db.Float, nullable=True)
+    review = db.Column(db.String(500), nullable=True)
     img_url = db.Column(db.String(250), nullable=False)
 
     def __repr__(self):
         return f"{self.title} by {self.author}"
 
 
-# db = sqlite3.connect("movies-collection.db") cursor = db.cursor() cursor.execute("CREATE TABLE movies (id INTEGER
-# PRIMARY KEY, title varchar(250) NOT NULL UNIQUE, year INTEGER NOT NULL, description varchar(250) NOT NULL,
-# rating FLOAT NOT NULL, ranking INTEGER NOT NULL, review varchar(500) NOT NULL, img_url varchar(250))")
-
 def add_new_movie(data):
-    print(data)
-    new_movie = Movie(
+    new_movie = Movies(
         title=data['original_title'],
         year=int(data['release_date'][:4]),
         description=data["overview"],
-        rating=0.0,
-        ranking=0,
-        review="None",
         img_url=f"https://image.tmdb.org/t/p/original{data['poster_path']}",
     )
 
@@ -50,7 +49,6 @@ def add_new_movie(data):
 
 
 def look_up_movie(title):
-
     params = {
         "api_key": os.getenv('TMDB_API_KEY'),
         "query": title,
@@ -61,7 +59,8 @@ def look_up_movie(title):
         response = requests.get(url="https://api.themoviedb.org/3/search/movie", params=params)
         response.raise_for_status()
         data = response.json()
-        hashed_data = [{"id": movie['id'], "title": movie['title'], "date": movie['release_date']} for movie in data['results']]
+        hashed_data = [{"id": movie['id'], "title": movie['title'], "date": movie['release_date']} for movie in
+                       data['results']]
         return hashed_data
     except requests.exceptions.RequestException as e:
         print(e)
@@ -69,7 +68,6 @@ def look_up_movie(title):
 
 
 def look_up_id(movie_id):
-
     params = {
         "api_key": os.getenv('TMDB_API_KEY'),
     }
@@ -97,18 +95,17 @@ class AddMovieForm(FlaskForm):
 
 @app.route("/")
 def home():
-    movies = Movie.query.all()
+    movies = db.session.query(Movies).order_by(Movies.rating)
     return render_template("index.html", movies=movies)
 
 
 @app.route("/edit<int:movie_id>", methods=['POST', 'GET'])
 def edit(movie_id):
-    movie = Movie.query.get(movie_id)
+    movie = Movies.query.get(movie_id)
     form = EditMovieForm()
     if form.validate_on_submit():
         movie.rating = form.rating.data
         movie.review = form.review.data
-        print(form.rating.data)
         db.session.commit()
         return redirect(url_for('home'))
     else:
@@ -119,7 +116,7 @@ def edit(movie_id):
 
 @app.route("/delete<int:movie_id>", methods=['GET'])
 def delete(movie_id):
-    movie = Movie.query.get(movie_id)
+    movie = Movies.query.get(movie_id)
     db.session.delete(movie)
     db.session.commit()
     return redirect(url_for('home'))
@@ -138,9 +135,12 @@ def add():
 @app.route("/select<int:movie_id>", methods=['POST', 'GET'])
 def select(movie_id):
     movie = look_up_id(movie_id)
-    add_new_movie(movie)
-    movie_added = db.session.query(Movie).filter_by(title=movie['title']).first()
-    return redirect(url_for('edit', movie_id=movie_added.id))
+    if movie:
+        add_new_movie(movie)
+        movie_added = db.session.query(Movies).order_by(Movies.id.desc()).first()
+        return redirect(url_for('edit', movie_id=movie_added.id))
+    else:
+        return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
