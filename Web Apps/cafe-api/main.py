@@ -1,7 +1,8 @@
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import exc
 import random
-
+import json
 app = Flask(__name__)
 
 # Connect to Database
@@ -24,6 +25,7 @@ class Cafe(db.Model):
     can_take_calls = db.Column(db.Boolean, nullable=False)
     coffee_price = db.Column(db.String(250), nullable=True)
 
+
 def cafe_to_dict(cafe):
     cafe = {
         "id": cafe.id,
@@ -39,7 +41,6 @@ def cafe_to_dict(cafe):
         "coffee_price": cafe.coffee_price,
     }
     return cafe
-
 
 
 @app.route("/")
@@ -60,10 +61,34 @@ def all():
     return jsonify(cafes=[cafe_to_dict(cafe) for cafe in cafes])
 
 
+@app.route("/search", methods=['GET'])
+def search():
+    location = request.args.get('location')
+    cafes = db.session.query(Cafe).filter(Cafe.location == location)
+    if cafes.count() > 0:
+        return jsonify(cafes=[cafe_to_dict(cafe) for cafe in cafes])
+    else:
+        return jsonify(error={f"Not Found": f"Sorry we dont have a location in {location}"})
 
-## HTTP GET - Read Record
 
-## HTTP POST - Create Record
+@app.route("/add", methods=['POST'])
+def add():
+    new_cafe = Cafe()
+    request_attributes = request.args.to_dict()
+
+    for key, value in request_attributes.items():
+        if value == "true" or value == "false":
+            exec(f"new_cafe.{key} = {bool(value)}")
+        else:
+            exec(f"new_cafe.{key} = '{value}'")
+    try:
+        db.session.add(new_cafe)
+        db.session.commit()
+        return jsonify(success={"response": "Successfully added new cafe."})
+
+    except exc.SQLAlchemyError:
+        return jsonify(error={"response": "An error has occurred, please check your query"})
+
 
 ## HTTP PUT/PATCH - Update Record
 
