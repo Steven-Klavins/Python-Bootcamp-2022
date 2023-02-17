@@ -2,7 +2,8 @@ from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exc
 import random
-import json
+import os
+
 app = Flask(__name__)
 
 # Connect to Database
@@ -68,7 +69,7 @@ def search():
     if cafes.count() > 0:
         return jsonify(cafes=[cafe_to_dict(cafe) for cafe in cafes])
     else:
-        return jsonify(error={f"Not Found": f"Sorry we dont have a location in {location}"})
+        return jsonify(error={f"Not Found": f"Sorry we dont have a location in {location}."})
 
 
 @app.route("/add", methods=['POST'])
@@ -87,12 +88,40 @@ def add():
         return jsonify(success={"response": "Successfully added new cafe."})
 
     except exc.SQLAlchemyError:
-        return jsonify(error={"response": "An error has occurred, please check your query"})
+        return jsonify(error={"response": "An error has occurred, please check your query."})
 
 
-## HTTP PUT/PATCH - Update Record
+@app.route("/update/<int:cafe_id>", methods=['PATCH', 'POST'])
+def update(cafe_id):
+    cafe = db.session.query(Cafe).get(cafe_id)
+    request_attributes = request.args.to_dict()
 
-## HTTP DELETE - Delete Record
+    for key, value in request_attributes.items():
+        if value == "true" or value == "false":
+            exec(f"cafe.{key} = {bool(value)}")
+        else:
+            exec(f"cafe.{key} = '{value}'")
+    try:
+        db.session.commit()
+        return jsonify(success={"response": "Cafe successfully updated."})
+
+    except exc.SQLAlchemyError:
+        return jsonify(error={"response": "An error has occurred, please check your query."})
+
+
+@app.route("/delete/<int:cafe_id>", methods=['DELETE'])
+def delete(cafe_id):
+    if request.args.get('api-key') == os.getenv('API_KEY'):
+        cafe = db.session.query(Cafe).get(cafe_id)
+        try:
+            db.session.delete(cafe)
+            db.session.commit()
+            return jsonify(success={"response": "Cafe successfully removed."})
+
+        except exc.SQLAlchemyError:
+            return jsonify(error={"response": "An error has occurred, please check your query."})
+    else:
+        return jsonify(error={"response": "Authorization failed, please check you entered a valid API key."})
 
 
 if __name__ == '__main__':
