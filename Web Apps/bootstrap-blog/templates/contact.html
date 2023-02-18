@@ -1,11 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<html lang="en">
 {% include "head.html" %}
-
-<body>
 {% include "header.html" %}
-<!-- Main Content-->
+
+{% block content %}
 <main class="mb-4">
     <div class="container px-4 px-lg-5">
         <div class="row gx-4 gx-lg-5 justify-content-center">
@@ -19,8 +15,5 @@
         </div>
     </div>
 </main>
-
 {% include "footer.html" %}
-
-</body>
-</html>
+{% endblock %}
