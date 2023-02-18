@@ -2,22 +2,50 @@ from flask import Flask, render_template, request, redirect, url_for
 import os
 import smtplib
 import requests
-
-EMAIL = "sample-email@email.com"
-PASSWORD = os.environ.get("SMTP_PASSWORD")
-SMTP_PROVIDER = "smtp.gmail.com"
+from flask_sqlalchemy import SQLAlchemy
+from wtforms import StringField, SubmitField
+from flask_wtf import FlaskForm
+from wtforms.validators import DataRequired, URL
+from flask_bootstrap import Bootstrap
+from flask_ckeditor import CKEditor, CKEditorField
 
 app = Flask(__name__)
+
+EMAIL = "sample-email@email.com"
+SMTP_PROVIDER = "smtp.gmail.com"
+ckeditor = CKEditor(app)
+Bootstrap(app)
+
+# CONNECT TO DB
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+
+# CONFIGURE TABLE
+class BlogPost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(250), unique=True, nullable=False)
+    subtitle = db.Column(db.String(250), nullable=False)
+    date = db.Column(db.String(250), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    author = db.Column(db.String(250), nullable=False)
+    img_url = db.Column(db.String(250), nullable=False)
+
+
+# WTForm
+class CreatePostForm(FlaskForm):
+    title = StringField("Blog Post Title", validators=[DataRequired()])
+    subtitle = StringField("Subtitle", validators=[DataRequired()])
+    author = StringField("Your Name", validators=[DataRequired()])
+    img_url = StringField("Blog Image URL", validators=[DataRequired(), URL()])
+    body = StringField("Blog Content", validators=[DataRequired()])
+    submit = SubmitField("Submit Post")
 
 
 # Attempt to retrieve blog data.
 def get_blog_data():
-    try:
-        response = requests.get("https://api.npoint.io/eb88574a126d526b4a03")
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(e)
-        return []
+    return []
 
 
 # Send the contact form email.
@@ -30,7 +58,7 @@ def send_contact_email(email_data):
     try:
         with smtplib.SMTP(SMTP_PROVIDER) as connection:
             connection.starttls()
-            connection.login(user=EMAIL, password=PASSWORD)
+            connection.login(user=EMAIL, password=os.environ.get("SMTP_PASSWORD"))
             connection.sendmail(from_addr=EMAIL, to_addrs=EMAIL, msg=email_body)
             return True
     except smtplib.SMTPResponseException as e:
@@ -40,7 +68,7 @@ def send_contact_email(email_data):
 
 @app.route('/')
 def home():
-    blogs = get_blog_data()
+    blogs = db.session.query(BlogPost).all()
     return render_template("index.html", header_image="home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
 
 
@@ -87,5 +115,6 @@ def contact_form():
 # Individual post pages.
 @app.route('/post/<int:post_id>')
 def post(post_id):
-    blog = [blog for blog in get_blog_data() if int(blog["id"]) == post_id][0]
-    return render_template("post.html", header_image="post-sample-image.jpg", blog=blog, page_title=blog["title"])
+    blog = db.session.query(BlogPost).get(post_id)
+    print()
+    return render_template("post.html", header_image="post-sample-image.jpg", blog=blog, page_title=blog.title)
