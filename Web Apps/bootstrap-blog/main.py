@@ -71,6 +71,10 @@ def home():
     blogs = db.session.query(BlogPost).all()
     return render_template("index.html", header_image="home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
 
+@app.route('/new-post')
+def new_post():
+    return render_template("make-post.html", header_image="home-bg.jpg", page_title="Create a new blog post")
+
 
 @app.route('/about')
 def about():
