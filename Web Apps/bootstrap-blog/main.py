@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 import os
 import smtplib
-import requests
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import StringField, SubmitField
 from flask_wtf import FlaskForm
@@ -10,6 +10,7 @@ from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor, CKEditorField
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
 EMAIL = "sample-email@email.com"
 SMTP_PROVIDER = "smtp.gmail.com"
@@ -39,13 +40,23 @@ class CreatePostForm(FlaskForm):
     subtitle = StringField("Subtitle", validators=[DataRequired()])
     author = StringField("Your Name", validators=[DataRequired()])
     img_url = StringField("Blog Image URL", validators=[DataRequired(), URL()])
-    body = StringField("Blog Content", validators=[DataRequired()])
+    body = CKEditorField("Blog Content", validators=[DataRequired()])
     submit = SubmitField("Submit Post")
 
 
-# Attempt to retrieve blog data.
-def get_blog_data():
-    return []
+# Add new blog to DB
+def add_new_blog_post(form_data):
+    new_movie = BlogPost(
+        title=form_data.title.data,
+        subtitle=form_data.subtitle.data,
+        date=datetime.today().strftime("%d %B, %Y"),
+        body=form_data.body.data,
+        author=form_data.author.data,
+        img_url=form_data.img_url.data,
+    )
+
+    db.session.add(new_movie)
+    db.session.commit()
 
 
 # Send the contact form email.
@@ -71,9 +82,16 @@ def home():
     blogs = db.session.query(BlogPost).all()
     return render_template("index.html", header_image="home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
 
-@app.route('/new-post')
+
+@app.route('/new-post', methods=['POST', 'GET'])
 def new_post():
-    return render_template("make-post.html", header_image="home-bg.jpg", page_title="Create a new blog post")
+    form = CreatePostForm()
+    if form.validate_on_submit():
+        add_new_blog_post(form)
+        return redirect(url_for('home'))
+    else:
+        return render_template("make-post.html", header_image="home-bg.jpg", page_title="Create a new blog post",
+                               form=form)
 
 
 @app.route('/about')
@@ -120,5 +138,4 @@ def contact_form():
 @app.route('/post/<int:post_id>')
 def post(post_id):
     blog = db.session.query(BlogPost).get(post_id)
-    print()
     return render_template("post.html", header_image="post-sample-image.jpg", blog=blog, page_title=blog.title)
