@@ -45,8 +45,8 @@ class CreatePostForm(FlaskForm):
 
 
 # Add new blog to DB
-def add_new_blog_post(form_data):
-    new_movie = BlogPost(
+def process_blog_form_to_model(form_data):
+    blog = BlogPost(
         title=form_data.title.data,
         subtitle=form_data.subtitle.data,
         date=datetime.today().strftime("%d %B, %Y"),
@@ -54,9 +54,16 @@ def add_new_blog_post(form_data):
         author=form_data.author.data,
         img_url=form_data.img_url.data,
     )
+    return blog
 
-    db.session.add(new_movie)
-    db.session.commit()
+
+def update_blog(blog, updated_blog):
+    blog.title = updated_blog.title
+    blog.subtitle = updated_blog.subtitle
+    blog.date = updated_blog.date
+    blog.body = updated_blog.body
+    blog.author = updated_blog.author
+    blog.img_url = updated_blog.img_url
 
 
 # Send the contact form email.
@@ -87,11 +94,34 @@ def home():
 def new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
-        add_new_blog_post(form)
+        new_blog = process_blog_form_to_model(form)
+        db.session.add(new_blog)
+        db.session.commit()
         return redirect(url_for('home'))
     else:
         return render_template("make-post.html", header_image="home-bg.jpg", page_title="Create a new blog post",
                                form=form)
+
+
+@app.route('/edit-post/<int:post_id>', methods=['POST', 'GET'])
+def edit_post(post_id):
+    blog = db.session.query(BlogPost).get(post_id)
+    form = CreatePostForm(
+        title=blog.title,
+        subtitle=blog.subtitle,
+        date=blog.date,
+        body=blog.body,
+        author=blog.author,
+        img_url=blog.img_url,
+    )
+    if form.validate_on_submit():
+        updated_blog = process_blog_form_to_model(form)
+        update_blog(blog, updated_blog)
+        db.session.commit()
+        return redirect(url_for('post', post_id=blog.id))
+    else:
+        return render_template("make-post.html", header_image="post-sample-image.jpg", blog=blog,
+                               page_title=f"Edit {blog.title}", form=form)
 
 
 @app.route('/about')
