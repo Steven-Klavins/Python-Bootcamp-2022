@@ -4,7 +4,7 @@
   <img src="python-logo.png" />
 </p>
 
-**Progress: 80%**
+**Progress: 85%**
 
 This repo contains numerous projects I built whilst taking the [100 days of code](https://www.udemy.com/course/100-days-of-code/) course. During the course, over 60 hours of video lectures were presented by Dr. Angela Yu, a lead instructor at the London App Brewery, and a former instructor at such companies as Twitter, Facebook, and Google.
 
