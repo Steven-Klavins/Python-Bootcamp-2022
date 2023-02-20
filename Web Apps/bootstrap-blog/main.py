@@ -57,6 +57,7 @@ def process_blog_form_to_model(form_data):
     return blog
 
 
+# Process updated blog data
 def update_blog(blog, updated_blog):
     blog.title = updated_blog.title
     blog.subtitle = updated_blog.subtitle
@@ -84,12 +85,14 @@ def send_contact_email(email_data):
         return False
 
 
+# Home page
 @app.route('/')
 def home():
     blogs = db.session.query(BlogPost).all()
-    return render_template("index.html", header_image="home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
+    return render_template("index.html", header_image="/static/images/home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
 
 
+# New blog page
 @app.route('/new-post', methods=['POST', 'GET'])
 def new_post():
     form = CreatePostForm()
@@ -99,10 +102,11 @@ def new_post():
         db.session.commit()
         return redirect(url_for('home'))
     else:
-        return render_template("make-post.html", header_image="home-bg.jpg", page_title="Create a new blog post",
+        return render_template("make-post.html", header_image="/static/images/home-bg.jpg", page_title="Create a new blog post",
                                form=form)
 
 
+# Blog edit page
 @app.route('/edit-post/<int:post_id>', methods=['POST', 'GET'])
 def edit_post(post_id):
     blog = db.session.query(BlogPost).get(post_id)
@@ -120,29 +124,42 @@ def edit_post(post_id):
         db.session.commit()
         return redirect(url_for('post', post_id=blog.id))
     else:
-        return render_template("make-post.html", header_image="post-sample-image.jpg", blog=blog,
+        return render_template("make-post.html", header_image=blog.img_url, blog=blog,
                                page_title=f"Edit {blog.title}", form=form)
 
 
+# Delete blog post route
+@app.route('/delete-post/<int:post_id>')
+def delete_post(post_id):
+    blog = db.session.query(BlogPost).get(post_id)
+    db.session.delete(blog)
+    db.session.commit()
+    return redirect(url_for('home'))
+
+
+# About page
 @app.route('/about')
 def about():
-    return render_template("about.html", header_image="about-bg.jpg", page_title="About")
+    return render_template("about.html", header_image="/static/images/about-bg.jpg", page_title="About")
 
 
+# Contact page
 @app.route('/contact')
 def contact():
-    return render_template("contact.html", header_image="contact-bg.jpg", page_title="Contact")
+    return render_template("contact.html", header_image="/static/images/contact-bg.jpg", page_title="Contact")
 
 
+# Contact form confirmation
 @app.route('/thanks')
 def thanks():
-    return render_template("message.html", header_image="contact-bg.jpg",
+    return render_template("message.html", header_image="/static/images/contact-bg.jpg",
                            page_title="Message sent!")
 
 
+# Error page for failed contact form submissions
 @app.route('/sorry')
 def sorry():
-    return render_template("message.html", header_image="contact-bg.jpg",
+    return render_template("message.html", header_image="/static/images/contact-bg.jpg",
                            page_title="Sorry something went wrong!")
 
 
@@ -168,4 +185,4 @@ def contact_form():
 @app.route('/post/<int:post_id>')
 def post(post_id):
     blog = db.session.query(BlogPost).get(post_id)
-    return render_template("post.html", header_image="post-sample-image.jpg", blog=blog, page_title=blog.title)
+    return render_template("post.html", header_image=blog.img_url, blog=blog, page_title=blog.title)
