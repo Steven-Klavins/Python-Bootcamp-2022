@@ -1,14 +1,19 @@
+import os
 from flask import Flask, render_template, request, url_for, redirect, flash, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField, PasswordField
+from wtforms.validators import DataRequired, URL
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
 
 app = Flask(__name__)
 
-app.config['SECRET_KEY'] = 'any-secret-key-you-choose'
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
 
 ##CREATE TABLE IN DB
 class User(UserMixin, db.Model):
@@ -16,8 +21,17 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
-#Line below only required once, when creating DB. 
+
+
+# Line below only required once, when creating DB.
 # db.create_all()
+
+# WTForm
+class CreateUserForm(FlaskForm):
+    name = StringField("Name", validators=[DataRequired()], render_kw={"placeholder": "Name"})
+    email = StringField("Email", validators=[DataRequired()], render_kw={"placeholder": "Email"})
+    password = PasswordField("Password", validators=[DataRequired()], render_kw={"placeholder": "Password"})
+    submit = SubmitField("Submit Post")
 
 
 @app.route('/')
@@ -25,9 +39,20 @@ def home():
     return render_template("index.html")
 
 
-@app.route('/register')
+@app.route('/register', methods=['GET', 'POST'])
 def register():
-    return render_template("register.html")
+    form = CreateUserForm()
+    if form.validate_on_submit():
+        user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=form.password.data
+        )
+        db.session.add(user)
+        db.session.commit()
+        return render_template("secrets.html", name=user.name)
+    else:
+        return render_template("register.html", form=form)
 
 
 @app.route('/login')
@@ -45,9 +70,9 @@ def logout():
     pass
 
 
-@app.route('/download')
+@app.route('/download', methods=['GET'])
 def download():
-    pass
+    return send_from_directory(directory="./static/files/", filename="cheat_sheet.pdf")
 
 
 if __name__ == "__main__":
