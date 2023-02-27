@@ -6,6 +6,8 @@
   blog site built in Flask.
 - [Book Library](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/book-library) - A minimalistic Flask app for storing and scoring your favourite books.
 - [Bootstrap Blog](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/bootstrap-blog) - A Flask/Bootstrap blogging site.
+- [Cafe API](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/cafe-api)
+- [Flask Auth](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/flask-auth)
 - [Coffee & Wifi](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/coffee-and-wifi) - A Flask application for scoring cafes' suitability for work purposes. 
 - [Higher Lower](https://github.com/Steven-Klavins/Python-Bootcamp-2022/tree/main/Web%20Apps/higher-lower) - An in
   browser guess the number game built in Flask.
