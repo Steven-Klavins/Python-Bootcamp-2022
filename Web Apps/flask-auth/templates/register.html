@@ -4,6 +4,9 @@
 <div class="box">
 	<h1>Register</h1>
     <form name="register" action="{{ url_for('register') }}" method="post" enctype="multipart/form-data">
+		{% if error %}
+        	<p class=error style="margin-bottom: 12px;"><strong>Error:</strong> {{ error }} </p>
+        {% endif %}
 		{{ form.csrf_token }}
         {{ form.name(size=30) }}
 		{{ form.email(size=30) }}
