@@ -1,14 +1,16 @@
 {% extends "base.html" %}
-{% block content %}
 
+{% block content %}
 <div class="box">
     <h1>Login</h1>
-
-    <form action="{{ url_for('login') }}" method="post">
-        <input type="text" name="email" placeholder="Email" required="required"/>
-        <input type="password" name="password" placeholder="Password" required="required"/>
+    <form name="register" action="{{ url_for('login') }}" method="post" enctype="multipart/form-data">
+        {% if error %}
+        <p class=error style="margin-bottom: 12px;"><strong>Error:</strong> {{ error }} </p>
+        {% endif %}
+        {{ form.csrf_token }}
+        {{ form.email(size=30) }}
+        {{ form.password(size=30) }}
         <button type="submit" class="btn btn-primary btn-block btn-large">Let me in.</button>
     </form>
 </div>
-
 {% endblock %}
