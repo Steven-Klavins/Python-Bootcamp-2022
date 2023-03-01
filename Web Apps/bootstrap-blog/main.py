@@ -3,11 +3,16 @@ import os
 import smtplib
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
+from flask_login import LoginManager
 from wtforms import StringField, SubmitField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, URL
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor, CKEditorField
+from forms import CreatePostForm, CreateUserForm
+import sqlite3
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -16,12 +21,18 @@ EMAIL = "sample-email@email.com"
 SMTP_PROVIDER = "smtp.gmail.com"
 ckeditor = CKEditor(app)
 Bootstrap(app)
+login_manager = LoginManager(app)
 
 # CONNECT TO DB
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///posts.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+
+# db = sqlite3.connect("blog.db")
+# cursor = db.cursor()
+# cursor.execute("CREATE TABLE user (id INTEGER PRIMARY KEY, email varchar(250) NOT NULL UNIQUE, password varchar(250) "
+#                "NOT NULL, name varchar(250) NOT NULL)")
 
 # CONFIGURE TABLE
 class BlogPost(db.Model):
@@ -34,14 +45,11 @@ class BlogPost(db.Model):
     img_url = db.Column(db.String(250), nullable=False)
 
 
-# WTForm
-class CreatePostForm(FlaskForm):
-    title = StringField("Blog Post Title", validators=[DataRequired()])
-    subtitle = StringField("Subtitle", validators=[DataRequired()])
-    author = StringField("Your Name", validators=[DataRequired()])
-    img_url = StringField("Blog Image URL", validators=[DataRequired(), URL()])
-    body = CKEditorField("Blog Content", validators=[DataRequired()])
-    submit = SubmitField("Submit Post")
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250), nullable=False)
 
 
 # Add new blog to DB
@@ -89,7 +97,40 @@ def send_contact_email(email_data):
 @app.route('/')
 def home():
     blogs = db.session.query(BlogPost).all()
-    return render_template("index.html", header_image="/static/images/home-bg.jpg", blogs=blogs, page_title="Welcome to my blog!")
+    return render_template("index.html", header_image="/static/images/home-bg.jpg", blogs=blogs,
+                           page_title="Welcome to my blog!")
+
+
+# Register
+@app.route('/register', methods=['POST', 'GET'])
+def register():
+    form = CreateUserForm()
+    if form.validate_on_submit():
+        user = User(
+            name=form.name.data,
+            email=form.email.data,
+            password=generate_password_hash(password=form.password.data, method='pbkdf2:sha256', salt_length=8)
+        )
+
+        if User.query.filter_by(email=form.email.data).first():
+            return render_template("register.html", header_image="/static/images/home-bg.jpg", form=form,
+                                   error="User already exists", page_title="Register")
+        else:
+            db.session.add(user)
+            db.session.commit()
+            login_user(user)
+            return render_template("index.html")
+    else:
+        return render_template("register.html", header_image="/static/images/home-bg.jpg", form=form,
+                               page_title="Register")
+
+    return render_template("register.html", header_image="/static/images/home-bg.jpg", form=form, page_title="Register")
+
+
+# Login
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    return render_template("login.html")
 
 
 # New blog page
@@ -102,7 +143,8 @@ def new_post():
         db.session.commit()
         return redirect(url_for('home'))
     else:
-        return render_template("make-post.html", header_image="/static/images/home-bg.jpg", page_title="Create a new blog post",
+        return render_template("make-post.html", header_image="/static/images/home-bg.jpg",
+                               page_title="Create a new blog post",
                                form=form)
 
 
