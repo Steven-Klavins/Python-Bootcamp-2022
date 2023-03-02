@@ -11,7 +11,7 @@ from wtforms.validators import DataRequired, URL
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor, CKEditorField
-from forms import CreatePostForm, CreateUserForm
+from forms import CreatePostForm, CreateUserForm, LoginForm
 import sqlite3
 
 app = Flask(__name__)
@@ -93,6 +93,11 @@ def send_contact_email(email_data):
         return False
 
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+
 # Home page
 @app.route('/')
 def home():
@@ -113,8 +118,10 @@ def register():
         )
 
         if User.query.filter_by(email=form.email.data).first():
-            return render_template("register.html", header_image="/static/images/home-bg.jpg", form=form,
-                                   error="User already exists", page_title="Register")
+            return render_template("login.html",
+                                   header_image="/static/images/home-bg.jpg", form=form,
+                                   error="That email is already registered with us, please login",
+                                   page_title="Register")
         else:
             db.session.add(user)
             db.session.commit()
@@ -130,7 +137,27 @@ def register():
 # Login
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    return render_template("login.html")
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            if check_password_hash(user.password, form.password.data):
+                login_user(user)
+                return redirect(url_for('home'))
+            else:
+                return render_template("login.html", form=form, error="Invalid Password")
+        else:
+            return render_template("login.html", form=form, error="Email Not Found")
+    else:
+        return render_template("login.html", form=form, header_image="/static/images/home-bg.jpg",
+                               page_title="Welcome Back!")
+
+
+@app.route('/logout', methods=['GET', 'POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 
 # New blog page
