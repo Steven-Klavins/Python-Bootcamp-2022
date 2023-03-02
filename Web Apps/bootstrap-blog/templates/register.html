@@ -10,7 +10,7 @@
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto" style="margin: 0 auto;">
         {% if error %}
-        	<p class=error style="margin-bottom: 12px;"><strong>Error:</strong> {{ error }} </p>
+        	<p class=error style="margin-bottom: 12px; color: red;"><strong>Error:</strong> {{ error }} </p>
         {% endif %}
        
        {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
