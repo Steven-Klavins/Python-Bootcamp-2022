@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, g, render_template, request, redirect, url_for, abort
 import os
 import smtplib
 from datetime import datetime
@@ -8,6 +8,7 @@ from flask_login import LoginManager
 from wtforms import StringField, SubmitField
 from flask_wtf import FlaskForm
 from wtforms.validators import DataRequired, URL
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor, CKEditorField
@@ -52,6 +53,16 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(250), nullable=False)
 
 
+def admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user.id is not 1:
+            abort(403, description="This action is for admins only.")
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 # Add new blog to DB
 def process_blog_form_to_model(form_data):
     blog = BlogPost(
@@ -93,6 +104,11 @@ def send_contact_email(email_data):
         return False
 
 
+@app.before_request
+def before_request():
+    g.user = current_user
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(user_id)
@@ -126,7 +142,7 @@ def register():
             db.session.add(user)
             db.session.commit()
             login_user(user)
-            return render_template("index.html")
+            return redirect(url_for('home'))
     else:
         return render_template("register.html", header_image="/static/images/home-bg.jpg", form=form,
                                page_title="Register")
@@ -162,6 +178,7 @@ def logout():
 
 # New blog page
 @app.route('/new-post', methods=['POST', 'GET'])
+@login_required
 def new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
@@ -177,6 +194,8 @@ def new_post():
 
 # Blog edit page
 @app.route('/edit-post/<int:post_id>', methods=['POST', 'GET'])
+@login_required
+@admin
 def edit_post(post_id):
     blog = db.session.query(BlogPost).get(post_id)
     form = CreatePostForm(
@@ -199,6 +218,8 @@ def edit_post(post_id):
 
 # Delete blog post route
 @app.route('/delete-post/<int:post_id>')
+@login_required
+@admin
 def delete_post(post_id):
     blog = db.session.query(BlogPost).get(post_id)
     db.session.delete(blog)
