@@ -14,7 +14,9 @@
                 </a>
                 <p class="post-meta">
                     Posted by <a href="#!">{{blog["author"]}}</a> on {{blog["date"]}}
+                    {% if current_user.is_authenticated and current_user.id == 1: %}
                     <a href="delete-post/{{blog['id']}}" style="color: red;">&#x2717;</a>
+                    {% endif %}
                 </p>
             </div>
             <!-- Divider-->
