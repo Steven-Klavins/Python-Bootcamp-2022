@@ -3,15 +3,12 @@ import os
 import smtplib
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import UserMixin, login_user, LoginManager, login_required, current_user, logout_user
+from flask_login import UserMixin, login_user, login_required, current_user, logout_user
 from flask_login import LoginManager
-from wtforms import StringField, SubmitField
-from flask_wtf import FlaskForm
-from wtforms.validators import DataRequired, URL
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
-from flask_ckeditor import CKEditor, CKEditorField
+from flask_ckeditor import CKEditor
 from forms import CreatePostForm, CreateUserForm, LoginForm
 import sqlite3
 
