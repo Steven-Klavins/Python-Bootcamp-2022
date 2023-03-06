@@ -1,3 +1,4 @@
+{% import "bootstrap/wtf.html" as wtf %}
 <!DOCTYPE html>
 <html lang="en">
 {% include "head.html" %}
@@ -19,6 +20,18 @@
             </div>
             {% endif %}
         </div>
+        <ul style="list-style: none; padding: 0;">
+            {% for comment in comments: %}
+                <li style="display: flex; margin-bottom: 30px;">
+                    <img src="{{ comment.author.email | gravatar }}" style="margin-right: 12px;">
+                    <span>{{comment.comment}}</span>
+
+                </li>
+            {% endfor %}
+        </ul>
+        {% if current_user.is_authenticated: %}
+            {{ wtf.quick_form(form, novalidate=True, button_map={"submit": "primary"}) }}
+        {% endif %}
     </div>
 </article>
 
