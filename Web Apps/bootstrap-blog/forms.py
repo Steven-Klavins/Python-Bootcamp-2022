@@ -24,3 +24,8 @@ class LoginForm(FlaskForm):
     email = StringField("Email", validators=[DataRequired()], render_kw={"placeholder": "Email"})
     password = PasswordField("Password", validators=[DataRequired()], render_kw={"placeholder": "Password"})
     submit = SubmitField("Submit Post")
+
+
+class CommentForm(FlaskForm):
+    comment = StringField("Comment", validators=[DataRequired()], render_kw={"placeholder": "Comment"})
+    submit = SubmitField("Submit Post")
