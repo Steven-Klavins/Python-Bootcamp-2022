@@ -9,8 +9,9 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
-from forms import CreatePostForm, CreateUserForm, LoginForm
+from forms import CreatePostForm, CreateUserForm, LoginForm, CommentForm
 from flask_migrate import Migrate
+from flask_gravatar import Gravatar
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -27,6 +28,15 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+gravatar = Gravatar(app,
+                    size=50,
+                    rating='g',
+                    default='retro',
+                    force_default=False,
+                    force_lower=False,
+                    use_ssl=False,
+                    base_url=None)
+
 
 # CONFIGURE TABLES
 class User(UserMixin, db.Model):
@@ -35,6 +45,7 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(250), nullable=False)
     name = db.Column(db.String(250), nullable=False)
     posts = db.relationship('BlogPost', backref='author')
+    comments = db.relationship('Comment', backref='author')
 
 
 class BlogPost(db.Model):
@@ -45,12 +56,20 @@ class BlogPost(db.Model):
     body = db.Column(db.Text, nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    comments = db.relationship('Comment', backref='comment_author')
+
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    comment = db.Column(db.String(250), nullable=False)
+    comment_author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    blog_id = db.Column(db.Integer, db.ForeignKey('blog_post.id'))
 
 
 def admin(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user.id is not 1:
+        if g.user.id != 1:
             abort(403, description="This action is for admins only.")
         return f(*args, **kwargs)
 
@@ -266,7 +285,21 @@ def contact_form():
 
 
 # Individual post pages.
-@app.route('/post/<int:post_id>')
+@app.route('/post/<int:post_id>', methods=['POST', 'GET'])
 def post(post_id):
+    comment_form = CommentForm()
     blog = db.session.query(BlogPost).get(post_id)
-    return render_template("post.html", header_image=blog.img_url, blog=blog, page_title=blog.title)
+    comments = db.session.query(Comment).filter_by(blog_id=blog.id)
+    if comment_form.validate_on_submit() and current_user.is_authenticated:
+        comment = Comment(
+            comment=comment_form.comment.data,
+            comment_author_id=current_user.id,
+            blog_id=blog.id
+        )
+
+        db.session.add(comment)
+        db.session.commit()
+        return redirect(url_for('post', post_id=blog.id, comments=comments))
+    else:
+        return render_template("post.html", header_image=blog.img_url, blog=blog, page_title=blog.title,
+                               form=comment_form, comments=comments)
