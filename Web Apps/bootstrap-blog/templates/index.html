@@ -13,7 +13,7 @@
                     <h3 class="post-subtitle">{{blog["subtitle"]}}</h3>
                 </a>
                 <p class="post-meta">
-                    Posted by <a href="#!">{{blog["author"]}}</a> on {{blog["date"]}}
+                    Posted by <a href="#!">{{blog.author.name}}</a> on {{blog["date"]}}
                     {% if current_user.is_authenticated and current_user.id == 1: %}
                     <a href="delete-post/{{blog['id']}}" style="color: red;">&#x2717;</a>
                     {% endif %}
