@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_bootstrap import Bootstrap
 from flask_ckeditor import CKEditor
 from forms import CreatePostForm, CreateUserForm, LoginForm
-import sqlite3
+from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -25,29 +25,26 @@ login_manager = LoginManager(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blog.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
-# db = sqlite3.connect("blog.db")
-# cursor = db.cursor()
-# cursor.execute("CREATE TABLE user (id INTEGER PRIMARY KEY, email varchar(250) NOT NULL UNIQUE, password varchar(250) "
-#                "NOT NULL, name varchar(250) NOT NULL)")
+# CONFIGURE TABLES
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    password = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250), nullable=False)
+    posts = db.relationship('BlogPost', backref='author')
 
-# CONFIGURE TABLE
+
 class BlogPost(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(250), unique=True, nullable=False)
     subtitle = db.Column(db.String(250), nullable=False)
     date = db.Column(db.String(250), nullable=False)
     body = db.Column(db.Text, nullable=False)
-    author = db.Column(db.String(250), nullable=False)
     img_url = db.Column(db.String(250), nullable=False)
-
-
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(250), unique=True, nullable=False)
-    password = db.Column(db.String(250), nullable=False)
-    name = db.Column(db.String(250), nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
 
 def admin(f):
@@ -61,13 +58,13 @@ def admin(f):
 
 
 # Add new blog to DB
-def process_blog_form_to_model(form_data):
+def process_blog_form_to_model(form_data, user_id):
     blog = BlogPost(
         title=form_data.title.data,
         subtitle=form_data.subtitle.data,
         date=datetime.today().strftime("%d %B, %Y"),
         body=form_data.body.data,
-        author=form_data.author.data,
+        author_id=user_id,
         img_url=form_data.img_url.data,
     )
     return blog
@@ -79,7 +76,6 @@ def update_blog(blog, updated_blog):
     blog.subtitle = updated_blog.subtitle
     blog.date = updated_blog.date
     blog.body = updated_blog.body
-    blog.author = updated_blog.author
     blog.img_url = updated_blog.img_url
 
 
@@ -179,7 +175,7 @@ def logout():
 def new_post():
     form = CreatePostForm()
     if form.validate_on_submit():
-        new_blog = process_blog_form_to_model(form)
+        new_blog = process_blog_form_to_model(form_data=form, user_id=current_user.id)
         db.session.add(new_blog)
         db.session.commit()
         return redirect(url_for('home'))
@@ -200,11 +196,12 @@ def edit_post(post_id):
         subtitle=blog.subtitle,
         date=blog.date,
         body=blog.body,
-        author=blog.author,
+        author_id=blog.author_id,
         img_url=blog.img_url,
+
     )
     if form.validate_on_submit():
-        updated_blog = process_blog_form_to_model(form)
+        updated_blog = process_blog_form_to_model(form, user_id=current_user.id)
         update_blog(blog, updated_blog)
         db.session.commit()
         return redirect(url_for('post', post_id=blog.id))
